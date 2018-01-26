@@ -163,20 +163,20 @@ describe("QuickOpenModal", () => {
       .simulate("change", { target: { value: "@someFunc" } });
     expect(filter).toHaveBeenCalledWith([], "someFunc", { key: "value" });
   });
-});
 
-test("basic gotoSource search", () => {
-  const { wrapper } = generateModal(
-    {
-      enabled: true,
-      searchType: "gotoSource",
-      symbols: {
-        functions: [],
-        variables: []
-      }
-    },
-    "mount"
-  );
-  wrapper.find("input").simulate("change", { target: { value: "abc" } });
-  expect(setState).toHaveBeenCalledWith((results: []));
+  test("Simple goto search query = :abc & searchType = goto", () => {
+    const { wrapper } = generateModal(
+      {
+        enabled: true,
+        query: ":abc",
+        searchType: "goto",
+        symbols: {
+          functions: [],
+          variables: []
+        }
+      },
+      "mount"
+    );
+    expect(wrapper).toMatchSnapshot();
+  });
 });
