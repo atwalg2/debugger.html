@@ -164,3 +164,19 @@ describe("QuickOpenModal", () => {
     expect(filter).toHaveBeenCalledWith([], "someFunc", { key: "value" });
   });
 });
+
+test("basic gotoSource search", () => {
+  const { wrapper } = generateModal(
+    {
+      enabled: true,
+      searchType: "gotoSource",
+      symbols: {
+        functions: [],
+        variables: []
+      }
+    },
+    "mount"
+  );
+  wrapper.find("input").simulate("change", { target: { value: "abc" } });
+  expect(setState).toHaveBeenCalledWith((results: []));
+});
