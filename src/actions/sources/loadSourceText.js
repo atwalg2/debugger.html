@@ -6,21 +6,19 @@
 
 import { isOriginalId } from "devtools-source-map";
 import { PROMISE } from "../utils/middleware/promise";
-import {
-  getSource,
-  getGeneratedSource,
-  getSources,
-  getTextSearchQuery
-} from "../../selectors";
+import { getSource, getGeneratedSource } from "../../selectors";
 import * as parser from "../../workers/parser";
-import { isThirdParty, isLoading, isLoaded } from "../../utils/source";
+import { isLoading, isLoaded } from "../../utils/source";
 
 import defer from "../../utils/defer";
 import type { ThunkArgs } from "../types";
 import type { SourceRecord } from "../../reducers/types";
-import { searchSource } from "../project-text-search";
 
 const requests = new Map();
+import { Services } from "devtools-modules";
+const loadSourceHistogram = Services.telemetry.getHistogramById(
+  "DEVTOOLS_DEBUGGER_LOAD_SOURCE_MS"
+);
 
 async function loadSource(source: SourceRecord, { sourceMaps, client }) {
   const id = source.get("id");
@@ -38,35 +36,12 @@ async function loadSource(source: SourceRecord, { sourceMaps, client }) {
 }
 
 /**
-  Load the text for all the available sources
- * @memberof actions/sources
- * @static
- */
-export function loadAllSources() {
-  return async ({ dispatch, getState }: ThunkArgs) => {
-    const sources = getSources(getState());
-    const query = getTextSearchQuery(getState());
-    for (const [, source] of sources) {
-      if (isThirdParty(source)) {
-        continue;
-      }
-
-      await dispatch(loadSourceText(source));
-      // If there is a current search query we search
-      // each of the source texts as they get loaded
-      if (query) {
-        await dispatch(searchSource(source.get("id"), query));
-      }
-    }
-  };
-}
-
-/**
  * @memberof actions/sources
  * @static
  */
 export function loadSourceText(source: SourceRecord) {
   return async ({ dispatch, getState, client, sourceMaps }: ThunkArgs) => {
+    const telemetryStart = performance.now();
     const deferred = defer();
 
     // Fetch the source text only once.
@@ -107,5 +82,9 @@ export function loadSourceText(source: SourceRecord) {
     // signal that the action is finished
     deferred.resolve();
     requests.delete(id);
+
+    const telemetryEnd = performance.now();
+    const duration = telemetryEnd - telemetryStart;
+    loadSourceHistogram.add(duration);
   };
 }

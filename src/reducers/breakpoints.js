@@ -66,6 +66,10 @@ function update(
     case "REMAP_BREAKPOINTS": {
       return remapBreakpoints(state, action);
     }
+
+    case "NAVIGATE": {
+      return initialState();
+    }
   }
 
   return state;
@@ -94,14 +98,16 @@ function addBreakpoint(state, action) {
 
 function syncBreakpoint(state, data) {
   const { breakpoint, previousLocation } = data;
-  const locationId = makeLocationId(breakpoint.location);
 
   if (previousLocation) {
-    return state
-      .deleteIn(["breakpoints", makeLocationId(previousLocation)])
-      .setIn(["breakpoints", locationId], breakpoint);
+    state = state.deleteIn(["breakpoints", makeLocationId(previousLocation)]);
   }
 
+  if (!breakpoint) {
+    return state;
+  }
+
+  const locationId = makeLocationId(breakpoint.location);
   return state.setIn(["breakpoints", locationId], breakpoint);
 }
 
